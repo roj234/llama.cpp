@@ -76,14 +76,19 @@ struct llama_file::impl {
     }
 
     impl(const char * fname, const char * mode, [[maybe_unused]] const bool use_direct_io = false) {
-        fp = ggml_fopen(fname, mode);
+        fp = fopen(fname, mode);
         if (fp == NULL) {
             throw std::runtime_error(format("failed to open %s: %s", fname, strerror(errno)));
         }
         fp_win32 = (HANDLE) _get_osfhandle(_fileno(fp));
-        seek(0, SEEK_END);
-        size = tell();
-        seek(0, SEEK_SET);
+
+        if (_fseeki64(fp, 0, SEEK_END) != 0) {
+            throw std::runtime_error("failed to seek to end");
+        }
+        size = _ftelli64(fp);
+        if (_fseeki64(fp, 0, SEEK_SET) != 0) {
+            throw std::runtime_error("failed to seek to start");
+        }
     }
 
     impl(FILE * file) : owns_fp(false) {

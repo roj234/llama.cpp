@@ -79,14 +79,6 @@ llm_build_qwen3next::llm_build_qwen3next(const llama_model & model, const llm_gr
     ggml_build_forward_expand(gf, cur);
 }
 
-// utility to get one slice from the third dimension
-// input dim:  [x, y, c, b]
-// output dim: [x, y, 1, b]
-static ggml_tensor * get_slice_2d(ggml_context * ctx0, ggml_tensor * t, int64_t c) {
-    return ggml_view_4d(ctx0, t, t->ne[0], t->ne[1], 1, t->ne[3],
-        t->nb[1], t->nb[2], t->nb[3], t->nb[2] * c);
-}
-
 ggml_tensor * llm_build_qwen3next::build_norm_gated(
         ggml_tensor * input,
         ggml_tensor * weights,

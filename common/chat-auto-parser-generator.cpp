@@ -13,16 +13,6 @@
 
 using json = nlohmann::ordered_json;
 
-// Helper to iterate over tools/functions
-static void foreach_function(const json & tools, const std::function<void(const json &)> & fn) {
-    for (const auto & tool : tools) {
-        if (!tool.contains("type") || tool.at("type") != "function" || !tool.contains("function")) {
-            continue;
-        }
-        fn(tool);
-    }
-}
-
 namespace autoparser {
 
 parser_build_context::parser_build_context(common_chat_peg_builder & p, const generation_params & inputs) :
