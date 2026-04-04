@@ -510,6 +510,7 @@ task_params server_task::params_from_json_cmpl(
     {
         params.sampling.logit_bias.clear();
 
+        params.logit_bias_only_first_token         = json_value(data, "logit_bias_only_first_token", false);
         const auto & logit_bias = data.find("logit_bias");
         if (logit_bias != data.end() && logit_bias->is_array()) {
             const int n_vocab = llama_vocab_n_tokens(vocab);

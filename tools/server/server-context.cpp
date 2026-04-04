@@ -627,6 +627,14 @@ struct server_metrics {
 };
 
 
+struct my_common_sampler {
+    common_params_sampling params;
+
+    struct llama_sampler * grmr;
+    struct llama_sampler * rbudget;
+    struct llama_sampler * chain;
+};
+
 //
 // server_context_impl (private implementation)
 //
@@ -2912,11 +2920,23 @@ private:
 
                 const int tok_idx = slot.i_batch - i;
 
-                llama_token id = common_sampler_sample(slot.smpl.get(), slot.ctx, tok_idx);
+                auto common_sampler_inst = slot.smpl.get();
+                llama_token id = common_sampler_sample(common_sampler_inst, slot.ctx, tok_idx);
 
                 slot.i_batch = -1;
 
-                common_sampler_accept(slot.smpl.get(), id, true);
+                common_sampler_accept(common_sampler_inst, id, true);
+
+                auto current_task = slot.task.get();
+                if (current_task != nullptr && current_task->params.logit_bias_only_first_token) {
+                    // TODO this is a hack
+                    auto mci = (my_common_sampler*)common_sampler_inst;
+                    if (mci->params.has_logit_bias()) {
+                        auto logits_bias_sampler = llama_sampler_chain_remove(mci->chain, 0);
+                        llama_sampler_free(logits_bias_sampler);
+                        mci->params.logit_bias.clear();
+                    }
+                }
 
                 // here we have synchronized the llama_context (due to the sampling above), so we can do time measurement
                 const int64_t t_current = ggml_time_us();
