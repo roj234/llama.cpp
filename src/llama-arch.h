@@ -138,6 +138,7 @@ enum llm_arch {
     LLM_ARCH_MAINCODER,
     LLM_ARCH_KIMI_LINEAR,
     LLM_ARCH_UNKNOWN,
+    LLM_ARCH_FOR_QUANTIZE,
 };
 
 enum llm_kv {

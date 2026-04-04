@@ -884,8 +884,13 @@ static void llama_model_quantize_impl(const std::string & fname_inp, const std::
 
     llama_model model(llama_model_default_params());
 
-    model.load_arch   (ml);
-    model.load_hparams(ml);
+    if (ml.llm_kv.arch == LLM_ARCH_UNKNOWN) {
+        ml.llm_kv.arch = LLM_ARCH_FOR_QUANTIZE;
+        //model.ftype = ml.ftype;
+    } else {
+        model.load_arch   (ml);
+        model.load_hparams(ml);
+    }
     model.load_stats  (ml);
 
     quantize_state_impl qs(model, params);
