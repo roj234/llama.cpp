@@ -671,7 +671,7 @@ json completion_token_output::to_json(bool post_sampling_probs) const {
         probs_for_token.push_back(json {
             {"id",      p.tok},
             {"token",   txt},
-            {"bytes",   str_to_bytes(p.txt)},
+            //{"bytes",   str_to_bytes(p.txt)},
             {
                 post_sampling_probs ? "prob" : "logprob",
                 post_sampling_probs ? p.prob : logarithm(p.prob)
@@ -689,7 +689,7 @@ json completion_token_output::probs_vector_to_json(const std::vector<completion_
         out.push_back(json {
             {"id",           p.tok},
             {"token",        txt},
-            {"bytes",        str_to_bytes(p.text_to_send)},
+            //{"bytes",        str_to_bytes(p.text_to_send)},
             {
                 post_sampling_probs ? "prob" : "logprob",
                 post_sampling_probs ? p.prob : logarithm(p.prob)
