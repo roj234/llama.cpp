@@ -187,9 +187,6 @@ bool server_http_context::init(const common_params & params) {
     // Frontend paths - all embedded UI assets
     static const std::unordered_set<std::string> frontend_paths = []() {
         std::unordered_set<std::string> paths { "/" };
-        for (const llama_ui_asset & a : llama_ui_get_assets()) {
-            paths.insert("/" + a.name);
-        }
         return paths;
     }();
 

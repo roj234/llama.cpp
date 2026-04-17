@@ -25,6 +25,7 @@
 static std::function<void(int)> shutdown_handler;
 static std::atomic_flag is_terminating = ATOMIC_FLAG_INIT;
 
+#ifndef _CLI
 static inline void signal_handler(int signal) {
     if (is_terminating.test_and_set()) {
         // in case it hangs, we can force terminate the server by hitting Ctrl+C twice
@@ -35,6 +36,7 @@ static inline void signal_handler(int signal) {
 
     shutdown_handler(signal);
 }
+#endif
 
 // satisfies -Wmissing-declarations (used by llama command)
 int llama_server(int argc, char ** argv);

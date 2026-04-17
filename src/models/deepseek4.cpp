@@ -258,8 +258,8 @@ static dsv4_state_tensors dsv4_build_state_snapshot(
     return { kv, score };
 }
 
-static constexpr int64_t DSV4_CSA_RATIO  = 4;
-static constexpr int64_t DSV4_HCA_RATIO  = 128;
+//static constexpr int64_t DSV4_CSA_RATIO  = 4;
+//static constexpr int64_t DSV4_HCA_RATIO  = 128;
 
 // mean over the hyper-connection streams: [n_embd, hc, n_tokens] -> [n_embd, n_tokens]
 static ggml_tensor * dsv4_hc_mean(ggml_context * ctx, ggml_tensor * x) {

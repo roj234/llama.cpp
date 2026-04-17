@@ -411,7 +411,7 @@ static void dsv4_state_read_k_cache(
     }
 }
 
-static std::string dsv4_plan_positions(const std::vector<int32_t> & values) {
+/*static std::string dsv4_plan_positions(const std::vector<int32_t> & values) {
     std::ostringstream ss;
     ss << "[";
     for (size_t i = 0; i < values.size(); ++i) {
@@ -422,7 +422,7 @@ static std::string dsv4_plan_positions(const std::vector<int32_t> & values) {
     }
     ss << "]";
     return ss.str();
-}
+}*/
 
 static llama_kv_cache_dsv4_context::comp_plan dsv4_build_comp_plan(
         const llama_ubatch & ubatch,
