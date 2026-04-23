@@ -118,7 +118,8 @@ struct task_result_state {
         : chat_parser_params(chat_parser_params)
         , oai_resp_id("resp_" + random_string())
         , oai_resp_reasoning_id("rs_" + random_string())
-        , oai_resp_message_id("msg_" + random_string()) {}
+        , oai_resp_message_id("msg_" + random_string())
+        , generated_text(chat_parser_params.prefill_prompt) {}
 
     // parse partial tool calls and update the internal state
     common_chat_msg update_chat_msg(

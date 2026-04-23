@@ -1131,13 +1131,6 @@ json oaicompat_chat_params_parse(
             throw std::invalid_argument("Cannot have 2 or more assistant messages at the end of the list.");
         }
 
-        /* TODO: test this properly */
-        inputs.reasoning_format = COMMON_REASONING_FORMAT_NONE;
-
-        if ( inputs.enable_thinking ) {
-            throw std::invalid_argument("Assistant response prefill is incompatible with enable_thinking.");
-        }
-
         inputs.add_generation_prompt = true;
     }
     inputs.force_pure_content = opt.force_pure_content;
@@ -1147,12 +1140,39 @@ json oaicompat_chat_params_parse(
 
     /* Append assistant prefilled message */
     if (prefill_assistant_message) {
+        auto inside_thinking = inputs.enable_thinking;
+        auto thinking_start = chat_params.thinking_start_tag;
+        auto thinking_end = chat_params.thinking_end_tag;
+
+        if ( inside_thinking ) {
+            int32_t pos = chat_params.prompt.length() - thinking_start.length();
+            // Could pos < 0 ever ???
+            if (pos < 0 || chat_params.prompt.find(thinking_start, pos) != pos) {
+                chat_params.prompt += thinking_start;
+            }
+            chat_params.prompt += last_message.reasoning_content;
+        }
+
         if (!last_message.content_parts.empty()) {
             for (auto & p : last_message.content_parts) {
+                if (p.text.length() > 0 && inside_thinking) {
+                    chat_params.prompt += thinking_end;
+                    inside_thinking = false;
+                }
+
                 chat_params.prompt += p.text;
             }
         } else {
+            if (last_message.content.length() > 0 && inside_thinking) {
+                chat_params.prompt += thinking_end;
+                inside_thinking = false;
+            }
             chat_params.prompt += last_message.content;
+        }
+
+        if (inputs.enable_thinking && !inside_thinking/* both reasoning_content and content, reasoning ended */) {
+            // feed to chat-parser to let it generate `content` instead of `reasoning_content`
+            llama_params["prefill_prompt"] = thinking_end;
         }
     }
 
