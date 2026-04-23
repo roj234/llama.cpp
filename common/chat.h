@@ -197,6 +197,7 @@ struct common_chat_parser_params {
     // Whether reasoning_content should be inlined in the content (e.g. for reasoning_format=deepseek in stream mode)
     bool                    reasoning_in_content = false;
     std::string             generation_prompt;
+    std::string             prefill_prompt;
     bool                    parse_tool_calls     = true;
     bool                    debug                = false;  // Enable debug output for PEG parser
     common_peg_arena        parser               = {};

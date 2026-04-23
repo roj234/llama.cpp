@@ -422,6 +422,7 @@ task_params server_task::params_from_json_cmpl(
         params.chat_parser_params.reasoning_format = reasoning_format;
         params.chat_parser_params.reasoning_in_content = params.stream && (reasoning_format == COMMON_REASONING_FORMAT_DEEPSEEK_LEGACY);
         params.chat_parser_params.generation_prompt = json_value(data, "generation_prompt", std::string());
+        params.chat_parser_params.prefill_prompt = json_value(data, "prefill_prompt", std::string());
         params.sampling.generation_prompt = params.chat_parser_params.generation_prompt;
         SRV_DBG("Generation prompt: '%s'\n", params.chat_parser_params.generation_prompt.c_str());
         params.chat_parser_params.parse_tool_calls = json_value(data, "parse_tool_calls", false);
