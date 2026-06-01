@@ -208,6 +208,11 @@ bool server_http_context::init(const common_params & params) {
             return true;
         }
 
+        // If path contains dot ( index.html, abc.css, abc.js ... )
+        if (req.path.find(".") != std::string::npos && req.path.rfind("/v1/", 0) == std::string::npos) {
+            return true;
+        }
+
         // If path is public or a UI asset, skip validation
         if (get_public_endpoints.count(req.path)) {
             return true;
