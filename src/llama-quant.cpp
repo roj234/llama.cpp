@@ -896,6 +896,10 @@ static void llama_model_quantize_impl(const std::string & fname_inp, const std::
         fname_inp, splits, /*file*/ nullptr, /*load_mode*/ load_mode, /*check_tensors*/ true, /*no_alloc*/ false, /*load_mtp*/ true, kv_overrides, nullptr);
     ml.init_mappings(false); // no prefetching
 
+    if (ml.llm_kv.arch == LLM_ARCH_UNKNOWN) {
+        ml.llm_kv.arch = LLM_ARCH_FOR_QUANTIZE;
+    }
+
     auto mparams = llama_model_default_params();
     std::unique_ptr<llama_model> model_ptr(llama_model_create(ml, mparams));
 
@@ -904,7 +908,11 @@ static void llama_model_quantize_impl(const std::string & fname_inp, const std::
         GGML_ABORT("fatal error: model does not implement llama_model_base");
     }
 
-    model->load_hparams(ml);
+    if (ml.llm_kv.arch == LLM_ARCH_FOR_QUANTIZE) {
+        //model.ftype = ml.ftype;
+    } else {
+        model->load_hparams(ml);
+    }
     model->load_stats  (ml);
 
     quantize_state_impl qs(*model, params);
@@ -1042,7 +1050,7 @@ static void llama_model_quantize_impl(const std::string & fname_inp, const std::
         }
         gguf_add_tensor(ctx_outs[i_split].get(), tensor);
 
-        metadata[i].allows_quantization = tensor_allows_quantization(params, model->arch, tensor);
+        metadata[i].allows_quantization = model == nullptr || tensor_allows_quantization(params, model->arch, tensor);
 
         if (metadata[i].allows_quantization) {
             metadata[i].target_type = llama_tensor_get_type(qs, params, tensor, default_type, metadata[i]);
