@@ -151,6 +151,7 @@ enum llm_arch {
     LLM_ARCH_NANBEIGE,
     LLM_ARCH_QWEN3TTS,
     LLM_ARCH_UNKNOWN,
+    LLM_ARCH_FOR_QUANTIZE,
 };
 
 enum llm_kv {

@@ -5,7 +5,7 @@
 #include <map>
 #include <vector>
 
-static const std::map<llm_arch, const char *> LLM_ARCH_NAMES = {
+static std::map<llm_arch, const char *> LLM_ARCH_NAMES = {
     { LLM_ARCH_CLIP,             "clip"             }, // dummy, only used by llama-quantize
     { LLM_ARCH_LLAMA,            "llama"            },
     { LLM_ARCH_LLAMA4,           "llama4"           },
@@ -146,6 +146,7 @@ static const std::map<llm_arch, const char *> LLM_ARCH_NAMES = {
     { LLM_ARCH_NANBEIGE,         "nanbeige"         },
     { LLM_ARCH_QWEN3TTS,         "qwen3tts"         },
     { LLM_ARCH_UNKNOWN,          "(unknown)"        },
+    { LLM_ARCH_FOR_QUANTIZE,     ""                 },
 };
 
 static const std::map<llm_kv, const char *> LLM_KV_NAMES = {
@@ -928,12 +929,14 @@ const char * llm_arch_name(llm_arch arch) {
 }
 
 llm_arch llm_arch_from_string(const std::string & name) {
+    // why not a reverse lookup ?
     for (const auto & kv : LLM_ARCH_NAMES) { // NOLINT
         if (kv.second == name) {
             return kv.first;
         }
     }
 
+    LLM_ARCH_NAMES[LLM_ARCH_FOR_QUANTIZE] = name.c_str();
     return LLM_ARCH_UNKNOWN;
 }
 
