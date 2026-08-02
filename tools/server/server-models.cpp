@@ -148,6 +148,24 @@ static std::string wide_to_utf8(const wchar_t * ws) {
 
     return utf8;
 }
+
+#include <shellapi.h>
+
+static std::string get_argv0_utf8(char** argv) {
+    int argc_w = 0;
+    LPWSTR* argv_w = CommandLineToArgvW(GetCommandLineW(), &argc_w);
+
+    // fallback
+    if (!argv_w || argc_w < 1) return argv[0];
+
+    std::string result = wide_to_utf8(argv_w[0]);
+    LocalFree(argv_w);
+    return result;
+}
+#else
+static std::string get_argv0_utf8(char** argv) {
+    return argv[0];
+}
 #endif
 
 static std::vector<std::string> get_environment() {
@@ -234,11 +252,12 @@ server_models::server_models(
     unset_reserved_args(base_preset, true);
     // set binary path
     try {
-        bin_path = get_server_exec_path().string();
+        auto u8s = get_server_exec_path().u8string();
+        bin_path = std::string(reinterpret_cast<const char*>(u8s.data()), u8s.size());
     } catch (const std::exception & e) {
-        bin_path = argv[0];
+        bin_path = get_argv0_utf8(argv);
         LOG_WRN("failed to get server executable path: %s\n", e.what());
-        LOG_WRN("using original argv[0] as fallback: %s\n", argv[0]);
+        LOG_WRN("using original argv[0] as fallback: %s\n", bin_path.c_str());
     }
     load_models();
 }
