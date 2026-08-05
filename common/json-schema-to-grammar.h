@@ -9,6 +9,7 @@
 std::string json_schema_to_grammar(const nlohmann::ordered_json & schema,
                                    bool force_gbnf = false);
 
+extern thread_local bool _gemma4_toolcall_json;
 class common_schema_converter;
 
 // Probes a JSON schema to extract information about its structure and type constraints.

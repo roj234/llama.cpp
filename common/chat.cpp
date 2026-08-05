@@ -1492,6 +1492,8 @@ static common_chat_params common_chat_params_init_gemma4(const common_chat_templ
     auto include_grammar     = has_response_format || (has_tools && inputs.tool_choice != COMMON_CHAT_TOOL_CHOICE_NONE);
     auto extract_reasoning   = inputs.reasoning_format != COMMON_REASONING_FORMAT_NONE;
 
+    _gemma4_toolcall_json = true;
+
     auto parser = build_chat_peg_parser([&](common_chat_peg_builder & p) {
         auto start = p.rule("start", p.optional(p.literal("<|turn>model\n")));
 
@@ -1512,52 +1514,19 @@ static common_chat_params common_chat_params_init_gemma4(const common_chat_templ
         }
 
         if (has_tools && inputs.tool_choice != COMMON_CHAT_TOOL_CHOICE_NONE) {
-            // Gemma4 tool calling syntax
-            // Rules should match traversal logic in gemma4_to_json()
-            p.rule("gemma4-string-content", p.until("<|\"|>"));
-            p.rule("gemma4-string", p.literal("<|\"|>") + p.ref("gemma4-string-content") + p.literal("<|\"|>"));
-            p.rule("gemma4-bool", p.json_bool());
-            p.rule("gemma4-null", p.json_null());
-            p.rule("gemma4-number", p.json_number());
-            p.rule("gemma4-dict-key", p.rule("gemma4-dict-key-name", p.chars("[^:}]", 1, -1)) + p.literal(":"));
-            p.rule("gemma4-dict-kv", p.ref("gemma4-dict-key") + p.space() + p.ref("gemma4-value"));
-            p.rule("gemma4-dict", [&]() {
-                auto ws = p.space();
-                auto member = p.ref("gemma4-dict-kv");
-                auto members = p.sequence({member, p.zero_or_more(p.sequence({p.literal(","), ws, member}))});
-                return p.sequence({
-                    p.literal("{"), ws,
-                    p.choice({p.literal("}"), p.sequence({members, ws, p.literal("}")})})
-                });
-            });
-            p.rule("gemma4-array", [&]() {
-                auto ws = p.space();
-                auto value = p.ref("gemma4-value");
-                auto elements = p.sequence({value, p.zero_or_more(p.sequence({p.literal(","), ws, value}))});
-                return p.sequence({
-                    p.literal("["), ws,
-                    p.choice({p.literal("]"), p.sequence({elements, ws, p.literal("]")})})
-                });
-            });
-            p.rule("gemma4-value", [&]() {
-                return p.choice({
-                    p.ref("gemma4-string"), p.ref("gemma4-dict"), p.ref("gemma4-array"),
-                    p.ref("gemma4-number"), p.ref("gemma4-bool"), p.ref("gemma4-null")
-                });
-            });
-
             auto tool_choice = p.choice();
 
             foreach_function(inputs.tools, [&](const json & tool) {
                 const auto & function = tool.at("function");
                 std::string  name     = function.at("name");
-                // TODO @aldehir : need to extend json-schema-to-grammar to produce more than JSON rules
-                // const auto & params   = function.at("parameters");
+                const auto & params   = function.at("parameters");
 
-                tool_choice |= p.rule("tool-" + name, p.tool(p.sequence({
-                    p.tool_open(p.tool_name(p.literal(name)) + p.peek(p.literal("{"))),
-                    p.tool_args(p.ref("gemma4-dict")),
-                })));
+                auto tool_parser = p.tool(
+                    p.tool_open(p.tool_name(p.literal(name)) + p.peek(p.literal("{"))) +
+                    p.tool_args(p.schema(p.json(), "tool-" + name + "-schema", params))
+                );
+
+                tool_choice |= p.rule("tool-" + name, tool_parser);
             });
 
             auto tool_call = p.trigger_rule("tool-call", p.repeat(
@@ -1602,6 +1571,7 @@ static common_chat_params common_chat_params_init_gemma4(const common_chat_templ
         };
     }
 
+    _gemma4_toolcall_json = false;
     return data;
 }
 

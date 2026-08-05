@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <vector>
 
+thread_local bool _gemma4_toolcall_json;
 using json = nlohmann::ordered_json;
 
 static std::string build_repetition(const std::string & item_rule, int min_items, int max_items, const std::string & separator_rule = "") {
@@ -322,17 +323,22 @@ private:
     std::vector<std::string> _warnings;
 
     std::string _add_rule(const std::string & name, const std::string & rule) {
+        std::string new_rule = rule;
+        if (_gemma4_toolcall_json && new_rule.starts_with("\"\\\"\"") && new_rule.ends_with("\"\\\"\"")) {
+            new_rule = "\"<|\\\"|>\"" + new_rule.substr(4, new_rule.size() - 8) + "\"<|\\\"|>\"";
+        }
+
         std::string esc_name = regex_replace(name, INVALID_RULE_CHARS_RE, "-");
-        if (_rules.find(esc_name) == _rules.end() || _rules[esc_name] == rule) {
-            _rules[esc_name] = rule;
+        if (_rules.find(esc_name) == _rules.end() || _rules[esc_name] == new_rule) {
+            _rules[esc_name] = new_rule;
             return esc_name;
         }
         int i = 0;
-        while (_rules.find(esc_name + std::to_string(i)) != _rules.end() && _rules[esc_name + std::to_string(i)] != rule) {
+        while (_rules.find(esc_name + std::to_string(i)) != _rules.end() && _rules[esc_name + std::to_string(i)] != new_rule) {
             i++;
         }
         std::string key = esc_name + std::to_string(i);
-        _rules[key] = rule;
+        _rules[key] = new_rule;
         return key;
     }
 
@@ -654,7 +660,9 @@ private:
             std::string prop_rule_name = visit(prop_schema, name + (name.empty() ? "" : "-") + prop_name);
             prop_kv_rule_names[prop_name] = _add_rule(
                 name + (name.empty() ? "" : "-") + prop_name + "-kv",
-                format_literal(json(prop_name).dump()) + " space \":\" space " + prop_rule_name
+                _gemma4_toolcall_json
+                    ? format_literal(prop_name+":") + prop_rule_name
+                    : format_literal(json(prop_name).dump()) + " space \":\" space " + prop_rule_name
             );
             if (required.find(prop_name) != required.end()) {
                 required_props.push_back(prop_name);

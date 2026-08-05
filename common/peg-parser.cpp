@@ -1192,8 +1192,14 @@ common_peg_parser common_peg_parser_builder::json_number() {
 }
 
 common_peg_parser common_peg_parser_builder::json_string() {
+    if (_gemma4_toolcall_json) {
+        rule("gemma4-unescaped-val", [this]() {
+            return until("<|\"|>");
+        });
+    }
+
     return rule("json-string", [this]() {
-        return sequence({literal("\""), string_content('"'), literal("\"")});
+        return _gemma4_toolcall_json ? sequence({literal("<|\"|>"), ref("gemma4-unescaped-val"), literal("<|\"|>")}) : sequence({literal("\""), string_content('"'), literal("\"")});
     });
 }
 
@@ -1210,9 +1216,15 @@ common_peg_parser common_peg_parser_builder::json_null() {
 }
 
 common_peg_parser common_peg_parser_builder::json_object() {
+    if (_gemma4_toolcall_json) {
+        rule("gemma4-unescaped-key", [this]() {
+            return chars("[^:}]", 1, -1);
+        });
+    }
+
     return rule("json-object", [this]() {
         auto ws = space();
-        auto member = sequence({json_string(), ws, literal(":"), ws, json()});
+        auto member = _gemma4_toolcall_json ? sequence({ref("gemma4-unescaped-key"), literal(":"), json()}) : sequence({json_string(), ws, literal(":"), ws, json()});
         auto members = sequence({member, zero_or_more(sequence({ws, literal(","), ws, member}))});
         return sequence({
             literal("{"),
